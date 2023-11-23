@@ -1,0 +1,53 @@
+name: Edikte Justiz email reporting
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '35 8 * * 4' # At 8:35AM every Thursday.
+
+jobs:
+  reporting:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+          cache-dependency-path: yarn.lock
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Generate report
+        id: report
+        env:
+          INCLUDE_ADDRESS_AND_CATEGORY_FILTER: '${{ secrets.INCLUDE_ADDRESS_AND_CATEGORY_FILTER }}'
+        run: |
+          echo 'report<<EOF' >> $GITHUB_OUTPUT
+          node --no-warnings index.js >> $GITHUB_OUTPUT
+          echo 'EOF' >> $GITHUB_OUTPUT
+      - name: Generate subject
+        id: subject
+        env:
+          INCLUDE_ADDRESS_AND_CATEGORY_FILTER: '${{ secrets.INCLUDE_ADDRESS_AND_CATEGORY_FILTER }}'
+        run: echo subject=$([[ $(node --no-warnings index.js | grep Alerts -A 3 | grep NA) ]] && echo [OK] || echo [ALERT]) Edikte Justiz weekly report >> $GITHUB_OUTPUT
+      - name: Send report by email
+        if: runner.debug == '0'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: Edikte Justiz
+          to: ${{ secrets.MAIL_TO }}
+          subject: '${{ steps.subject.outputs.subject }}'
+          body: ${{ steps.report.outputs.report }}
+      - name: debugging
+        run: "echo -e \"Subject: ${{ steps.subject.outputs.subject }}\nReport:\n${{ steps.report.outputs.report }}\""
+        if: ${{ runner.debug == '1' || failure() }}

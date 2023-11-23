@@ -1,0 +1,25 @@
+{
+  "name": "edikte-austria",
+  "version": "1.0.0",
+  "description": "Weekly report for Edikte Justiz",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node --no-warnings index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:kopax/edikte-austria.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kopax/edikte-austria/issues"
+  },
+  "author": "Dimitri Kopriwa",
+  "license": "UNLICENSED",
+  "private": false,
+  "dependencies": {
+    "date-fns": "^2.30.0",
+    "jquery": "^3.7.1",
+    "jsdom": "^22.1.0"
+  }
+}
